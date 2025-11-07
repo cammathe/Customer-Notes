@@ -200,7 +200,7 @@
         align-items: center;
         gap: var(--spacing-sm);
         font-size: 0.65rem;
-        fontweight: 600;
+        font-weight: 600;
         color: var(--text-medium);
     }
 
@@ -830,7 +830,7 @@
     const states = ['available', 'common', 'consideration', 'third-party'];
 
 // Prevent clicking on licensed modules
-if (element.classist.contains('licensed')) {
+if (element.classList.contains('licensed')) {
     return;
 }
     const currentIndex = states.findIndex(state => element.classList.contains(state));
@@ -1238,7 +1238,7 @@ sendThirdPartyUpdate() {
   },
 
 sendEvaluationUpdate() {
-    if (window.parent && window.parent !== window) 
+    if (window.parent && window.parent !== window) {
         const evaluationModules = [];
         
 // Get modules marked as consideration
