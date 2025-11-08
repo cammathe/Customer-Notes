@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 import { Plus, Trash2, Users, FileText, ChevronDown, ChevronRight, X, Globe, Folder, Package, Info, Brain, Upload, Download, Table, UserPlus, BookOpen } from 'lucide-react';
 
-// Constants
-import { MODULE_NAME_MAP, mapModuleName, getNotesAppNames, MODULE_STATUS, VALID_ANALYZER_MODULES } from './constants/moduleMapping';
+
 
 // Field configurations
 
@@ -611,6 +610,7 @@ function useLocalStorage(key, initialValue) {
 
         const parsed = JSON.parse(item);
 
+        console.log('Loaded data from localStorage:', parsed.lastSaved);
 
         return parsed;
 
@@ -2016,6 +2016,7 @@ useEffect(() => {
 
   const handleMessage = (event) => {
 
+    console.log('Received message in App:', event.data);
 
     
 
@@ -2023,6 +2024,7 @@ useEffect(() => {
 
   if (!selectedCustomer) {
 
+    console.log('No customer selected, ignoring update');
 
     return;
 
@@ -2030,6 +2032,7 @@ useEffect(() => {
 
   
 
+  console.log('Processing 3rd party update:', event.data.customSolutions);
 
   
 
@@ -2063,6 +2066,7 @@ useEffect(() => {
 
         // Update existing solution
 
+        console.log('Updating existing solution:', newSolution);
 
         updatedSolutions.push({
 
@@ -2076,6 +2080,7 @@ useEffect(() => {
 
         // Add new solution
 
+        console.log('Adding new 3rd party solution:', newSolution);
 
         updatedSolutions.push(newSolution);
 
@@ -2103,9 +2108,11 @@ useEffect(() => {
 
 if (event.data.type === 'EVALUATION_UPDATE') {
       if (!selectedCustomer) {
+        console.log('No customer selected, ignoring evaluation update');
         return;
       }
       
+      console.log('Processing evaluation update:', event.data.evaluations);
       
       const u = { ...selectedCustomer };
       if (!u.data.modules) u.data.modules = [];
@@ -2130,6 +2137,7 @@ if (event.data.type === 'EVALUATION_UPDATE') {
           );
           
           if (!isLicensed && !isAlreadyOpportunity) {
+            console.log('Adding potential opportunity:', evalModule.name);
             u.data.modules.push({
               name: evalModule.name,
               status: 'Opportunity',
@@ -2137,6 +2145,7 @@ if (event.data.type === 'EVALUATION_UPDATE') {
               source: 'analyzer'
             });
           } else {
+            console.log('Skipping duplicate:', evalModule.name, 'matched with existing module');
           }
         }
       });
@@ -2232,6 +2241,7 @@ const syncToAnalyzer = (customer) => {
     solutions: solutions
   }, '*');
   
+  console.log('Synced to analyzer:', { opportunities: uniqueOpportunities, solutions });
 };
 
 
@@ -2264,6 +2274,7 @@ const syncOpportunitiesToAnalyzer = () => {
 
     
 
+    console.log('Synced opportunities to analyzer:', opportunities);
 
   }
 
@@ -2273,6 +2284,7 @@ const syncOpportunitiesToAnalyzer = () => {
 
 const prepareAnalyzerData = (customer) => {
 
+console.log('ðŸ”µ prepareAnalyzerData CALLED for customer:', customer.name);
 
   // Complete mapping from Customer Notes to License Analyzer names
 
@@ -2416,6 +2428,7 @@ const prepareAnalyzerData = (customer) => {
 
   
 
+  console.log(`Processing: "${module.name}" -> "${mappedName}" (status: ${module.status})`);
 
   
 
@@ -2423,6 +2436,7 @@ const prepareAnalyzerData = (customer) => {
 
   if (!validAnalyzerModules.includes(mappedName)) {
 
+    console.log(`  âŒ SKIPPED - not in valid analyzer modules list`);
 
     return; // Skip this module
 
@@ -2432,11 +2446,13 @@ const prepareAnalyzerData = (customer) => {
 
   if (module.status === 'Licensed') {
 
+    console.log(`  âœ“ Added to licensed`);
 
     licensed.push(mappedName);
 
   } else if (module.status === 'Opportunity') {
 
+    console.log(`  âœ“ Added to opportunities`);
 
     opportunities.push(mappedName);
 
@@ -2446,11 +2462,15 @@ const prepareAnalyzerData = (customer) => {
 
 
 
+console.log('Final licensed list:', licensed);
+
+console.log('Final opportunities list:', opportunities);
 
 
 
+  console.log('Mapped licensed modules:', licensed);
 
-
+  console.log('Mapped opportunity modules:', opportunities);
 
 
 
@@ -2560,8 +2580,11 @@ const openLicenseAnalyzer = (customer) => {
 
   const data = prepareAnalyzerData(customer);
 
+  console.log('Sending to analyzer:', data);
 
+  console.log('Licensed modules:', data.licensed);
 
+  console.log('Opportunity modules:', data.opportunities);
 
   setAnalyzerData(data);
 
@@ -5093,6 +5116,7 @@ className="text-[#C74364] hover:text-[#D96682]">
             opportunities: uniqueOpportunities
           }, '*');
           
+          console.log('Synced after delete:', uniqueOpportunities);
         }
       }
     }
@@ -5135,6 +5159,7 @@ className="text-[#C74364] hover:text-[#D96682]">
               opportunities: remainingOpportunities
             }, '*');
             
+            console.log('Synced opportunities after deletion:', remainingOpportunities);
           }
         }, 100);
       }
@@ -5453,8 +5478,10 @@ className="text-[#C74364] hover:text-[#D96682]">
   ref={(iframe) => {
     if (iframe && analyzerData) {
       iframe.onload = () => {
+        console.log('Iframe loaded, waiting 500ms before sending data...');
         setTimeout(() => {
           if (iframe.contentWindow) {
+            console.log('Sending postMessage to iframe...');
             
             // Send initial data WITHOUT opportunities (we'll sync them separately)
             const initialData = {
@@ -5470,10 +5497,12 @@ className="text-[#C74364] hover:text-[#D96682]">
             // Wait for analyzer to load, then force sync from notes app
             setTimeout(() => {
               if (iframe.contentWindow) {
+                console.log('Force syncing current state from notes app...');
                 
                 // Send the actual current opportunities
                 syncToAnalyzer(selectedCustomer);
                 
+                console.log('Initial sync complete');
               }
             }, 1500);
           }
