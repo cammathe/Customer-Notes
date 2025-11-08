@@ -2111,7 +2111,7 @@ if (event.data.type === 'EVALUATION_UPDATE') {
       if (!u.data.modules) u.data.modules = [];
       
       // Remove all existing opportunities that came from the analyzer
-      u.data.modules = u.data.modules.filter(m => !(m.status === 'Opportunity' && m.source === 'analyzer'));
+      u.data.modules = u.data.modules.filter(m => !(m.status === MODULE_STATUS.OPPORTUNITY && m.source === 'analyzer'));
       
       // Add new opportunities from evaluations
       event.data.evaluations.forEach(evalModule => {
@@ -2126,7 +2126,7 @@ if (event.data.type === 'EVALUATION_UPDATE') {
           
           // Check if it's already an opportunity (from any source, check all possible names)
           const isAlreadyOpportunity = u.data.modules.some(m =>
-            possibleNotesNames.includes(m.name) && m.status === 'Opportunity'
+            possibleNotesNames.includes(m.name) && m.status === MODULE_STATUS.OPPORTUNITY
           );
           
           if (!isLicensed && !isAlreadyOpportunity) {
@@ -2170,42 +2170,12 @@ useEffect(() => {
 const syncToAnalyzer = (customer) => {
   const iframe = document.getElementById('licenseAnalyzerFrame');
   if (!iframe || !iframe.contentWindow) return;
-  
-  // Name mapping from notes app to analyzer (same as in prepareAnalyzerData)
-  const moduleNameMap = {
-    'Electronic Bank Payments - Advanced': 'Advanced Electronic Bank Payments',
-    'Account Reconciliation (EPM)': 'Account Reconciliation',
-    'Close Management + Consolidations (EPM)': 'Close Management',
-    'Revenue Management - Essentials': 'Revenue Management',
-    'Revenue Management - Allocations': 'Revenue Allocations',
-    'Contract Renewals (Deprecated)': 'Contract Renewals',
-    'Corporate Tax Reporting (EPM)': 'Corporate Tax Reporting',
-    'Narrative Reporting (EPM)': 'Narrative Reporting',
-    'NetSuite Planning + Budgeting (EPM)': 'Planning + Budgeting',
-    'SuitePeople Incentive Compensation': 'Incentive Compensation',
-    'SuitePeople Payroll': 'Payroll',
-    'SuitePeople Performance Management': 'Performance Management',
-    'SuitePeople Workforce Management': 'Workforce Management',
-    'Advanced Inventory Management': 'Inventory Management',
-    'Advanced Order Management': 'Order Management',
-    'Warehouse Management System': 'Warehouse Management',
-    'Work in Progress + Routings': 'WIP + Routings',
-    'SuiteCommerce InStore (POS)': 'SuiteCommerce InStore',
-    'ACS Monitor': 'ACS',
-    'ACS Optimize': 'ACS',
-    'ACS Architect': 'ACS',
-    'AI Consulting Services': 'AI Consulting',
-    'Disaster Recovery Premium': 'Disaster Recovery',
-    'LCS Standard': 'LCS',
-    'LCS Premium': 'LCS',
-    'Employee Users': 'Expense Reporting',
-  };
-  
+
   // Get opportunities and map names to analyzer format
   const opportunities = (customer.data.modules || [])
-    .filter(m => m.status === 'Opportunity')
+    .filter(m => m.status === MODULE_STATUS.OPPORTUNITY)
     .map(m => ({
-      name: moduleNameMap[m.name] || m.name, // Map to analyzer name
+      name: mapModuleName(m.name), // Map to analyzer name
       processArea: m.processArea
     }));
   
@@ -2248,7 +2218,7 @@ const syncOpportunitiesToAnalyzer = () => {
 
     const opportunities = (selectedCustomer.data.modules || [])
 
-      .filter(m => m.status === 'Opportunity')
+      .filter(m => m.status === MODULE_STATUS.OPPORTUNITY)
 
       .map(m => ({ name: m.name, processArea: m.processArea }));
 
@@ -2272,147 +2242,11 @@ const syncOpportunitiesToAnalyzer = () => {
 
 
 const prepareAnalyzerData = (customer) => {
-
-
-  // Complete mapping from Customer Notes to License Analyzer names
-
-  const moduleNameMap = {
-
-  // Procurement
-
-  'Electronic Bank Payments - Advanced': 'Advanced Electronic Bank Payments',
-
-  
-
-  // Accounting
-
-  'Account Reconciliation (EPM)': 'Account Reconciliation',
-
-  'Close Management + Consolidations (EPM)': 'Close Management',
-
-  
-
-  // Revenue
-
-  'Revenue Management - Essentials': 'Revenue Management',
-
-  'Revenue Management - Allocations': 'Revenue Allocations',
-
-  'Contract Renewals (Deprecated)': 'Contract Renewals',
-
-  
-
-  // Planning & Reporting
-
-  'Corporate Tax Reporting (EPM)': 'Corporate Tax Reporting',
-
-  'Narrative Reporting (EPM)': 'Narrative Reporting',
-
-  'NetSuite Planning + Budgeting (EPM)': 'Planning + Budgeting',
-
-  
-
-  // HR
-
-  'SuitePeople Incentive Compensation': 'Incentive Compensation',
-
-  'SuitePeople Payroll': 'Payroll',
-
-  'SuitePeople Performance Management': 'Performance Management',
-
-  'SuitePeople Workforce Management': 'Workforce Management',
-
-  
-
-  // Inventory
-
-  'Advanced Inventory Management': 'Inventory Management',
-
-  'Advanced Order Management': 'Order Management',
-
-  'Warehouse Management System': 'Warehouse Management',
-
-  
-
-  // Manufacturing
-
-  'Work in Progress + Routings': 'WIP + Routings',
-
-  
-
-  // eCommerce
-
-  'SuiteCommerce InStore (POS)': 'SuiteCommerce InStore',
-
-  
-
-  // Support
-
-  'ACS Monitor': 'ACS',
-
-  'ACS Optimize': 'ACS',
-
-  'ACS Architect': 'ACS',
-
-  'AI Consulting Services': 'AI Consulting',
-
-  'Disaster Recovery Premium': 'Disaster Recovery',
-
-  'LCS Standard': 'LCS',
-
-  'LCS Premium': 'LCS',
-
-  
-
-  // Users
-
-  'Employee Users': 'Expense Reporting',
-
-};
-
- // Modules that should be sent to the analyzer (from Product Library)
-
-  const validAnalyzerModules = [
-
-    'Compliance360', 'CRM', 'Outlook Connector', 'Salesforce Connector',
-
-    'Bill Capture', 'Advanced Electronic Bank Payments', 'Procurement', 'SuiteProcurement', 'Fixed Assets Management',
-
-    'Account Reconciliation', 'Advanced Financials', 'Close Management', 'Multi-Book', 'OneWorld', 'SuiteTax',
-
-    'Contract Renewals', 'Rebate Management', 'Revenue Management', 'Revenue Allocations',
-
-    'Dunning', 'e-invoicing', 'NetSuite Pay', 'SuiteBilling', 'SuitePayments',
-
-    'Field Service', 'Project Management', 'SuiteProjects', 'SuiteProjects Pro',
-
-    'Corporate Tax Reporting', 'Narrative Reporting', 'Planning + Budgeting', 'Analytics Warehouse', 'SuiteAnalytics Connect', 'NSAW Multi-Instance Connector',
-
-    'SuitePeople HR', 'Incentive Compensation', 'Payroll', 'Performance Management', 'Workforce Management',
-
-    'eCommerce Connector', 'POS Connector', 'SuiteCommerce', 'SuiteCommerce Advanced', 'SuiteCommerce InStore', 'Connector',
-
-    'Inventory Management', 'Order Management', 'Grid Order Management', 'Warehouse Management', 'Smart Count', 'Logistics Connector',
-
-    'Advanced Manufacturing', 'CPQ', 'Demand Planning', 'Quality Management', 'WIP + Routings', 'Work Orders',
-
-    'ACS', 'AI Consulting', 'Disaster Recovery', 'LCS', 'Support - Premium', 'NSIP', 'Sandbox', 'SuiteCloud+',
-
-    'Expense Reporting'
-
-  ];
-
-
-
   const licensed = [];
-
   const opportunities = [];
 
-
-
   (customer.data.modules || []).forEach(module => {
-
-  const mappedName = moduleNameMap[module.name] || module.name;
+    const mappedName = mapModuleName(module.name);
 
   
 
@@ -2421,7 +2255,7 @@ const prepareAnalyzerData = (customer) => {
 
   // Only include if it's in the valid analyzer modules list
 
-  if (!validAnalyzerModules.includes(mappedName)) {
+  if (!VALID_ANALYZER_MODULES.includes(mappedName)) {
 
 
     return; // Skip this module
@@ -2430,12 +2264,12 @@ const prepareAnalyzerData = (customer) => {
 
   
 
-  if (module.status === 'Licensed') {
+  if (module.status === MODULE_STATUS.LICENSED) {
 
 
     licensed.push(mappedName);
 
-  } else if (module.status === 'Opportunity') {
+  } else if (module.status === MODULE_STATUS.OPPORTUNITY) {
 
 
     opportunities.push(mappedName);
@@ -2518,43 +2352,7 @@ return {
 
 };
 
-// ADD THIS ENTIRE HELPER FUNCTION HERE
-const getNotesAppNamesForAnalyzer = (analyzerName) => {
-  const moduleNameMap = {
-    'Electronic Bank Payments - Advanced': 'Advanced Electronic Bank Payments',
-    'Account Reconciliation (EPM)': 'Account Reconciliation',
-    'Close Management + Consolidations (EPM)': 'Close Management',
-    'Revenue Management - Essentials': 'Revenue Management',
-    'Revenue Management - Allocations': 'Revenue Allocations',
-    'Contract Renewals (Deprecated)': 'Contract Renewals',
-    'Corporate Tax Reporting (EPM)': 'Corporate Tax Reporting',
-    'Narrative Reporting (EPM)': 'Narrative Reporting',
-    'NetSuite Planning + Budgeting (EPM)': 'Planning + Budgeting',
-    'SuitePeople Incentive Compensation': 'Incentive Compensation',
-    'SuitePeople Payroll': 'Payroll',
-    'SuitePeople Performance Management': 'Performance Management',
-    'SuitePeople Workforce Management': 'Workforce Management',
-    'Advanced Inventory Management': 'Inventory Management',
-    'Advanced Order Management': 'Order Management',
-    'Warehouse Management System': 'Warehouse Management',
-    'Work in Progress + Routings': 'WIP + Routings',
-    'SuiteCommerce InStore (POS)': 'SuiteCommerce InStore',
-    'ACS Monitor': 'ACS',
-    'ACS Optimize': 'ACS',
-    'ACS Architect': 'ACS',
-    'AI Consulting Services': 'AI Consulting',
-    'Disaster Recovery Premium': 'Disaster Recovery',
-    'LCS Standard': 'LCS',
-    'LCS Premium': 'LCS',
-    'Employee Users': 'Expense Reporting',
-  };
-  
-  const matches = Object.entries(moduleNameMap)
-    .filter(([notesName, mappedName]) => mappedName === analyzerName)
-    .map(([notesName]) => notesName);
-  
-  return [analyzerName, ...matches];
-};
+// Helper function now imported from constants/moduleMapping.js
 
 const openLicenseAnalyzer = (customer) => {
 
@@ -4965,9 +4763,9 @@ className="text-[#C74364] hover:text-[#D96682]">
       {['Licensed', 'Opportunity', 'Potential Opportunity', 'CAI', 'Recommended', 'Dropped', 'Lost'].map(status => {
         const filteredModules = selectedCustomer.data.modules.filter(m => {
           if (status === 'Opportunity') {
-            return m.status === 'Opportunity' && (!m.source || m.source !== 'analyzer');
+            return m.status === MODULE_STATUS.OPPORTUNITY && (!m.source || m.source !== 'analyzer');
           } else if (status === 'Potential Opportunity') {
-            return m.status === 'Opportunity' && m.source === 'analyzer';
+            return m.status === MODULE_STATUS.OPPORTUNITY && m.source === 'analyzer';
           }
           return m.status === status;
         });
@@ -5037,42 +4835,12 @@ className="text-[#C74364] hover:text-[#D96682]">
   onClick={() => setDeleteConfirmation({
     message: `Are you sure you want to remove "${m.name}" from this customer's modules?`,
     onConfirm: () => {
-      // Name mapping
-      const moduleNameMap = {
-        'Electronic Bank Payments - Advanced': 'Advanced Electronic Bank Payments',
-        'Account Reconciliation (EPM)': 'Account Reconciliation',
-        'Close Management + Consolidations (EPM)': 'Close Management',
-        'Revenue Management - Essentials': 'Revenue Management',
-        'Revenue Management - Allocations': 'Revenue Allocations',
-        'Contract Renewals (Deprecated)': 'Contract Renewals',
-        'Corporate Tax Reporting (EPM)': 'Corporate Tax Reporting',
-        'Narrative Reporting (EPM)': 'Narrative Reporting',
-        'NetSuite Planning + Budgeting (EPM)': 'Planning + Budgeting',
-        'SuitePeople Incentive Compensation': 'Incentive Compensation',
-        'SuitePeople Payroll': 'Payroll',
-        'SuitePeople Performance Management': 'Performance Management',
-        'SuitePeople Workforce Management': 'Workforce Management',
-        'Advanced Inventory Management': 'Inventory Management',
-        'Advanced Order Management': 'Order Management',
-        'Warehouse Management System': 'Warehouse Management',
-        'Work in Progress + Routings': 'WIP + Routings',
-        'SuiteCommerce InStore (POS)': 'SuiteCommerce InStore',
-        'ACS Monitor': 'ACS',
-        'ACS Optimize': 'ACS',
-        'ACS Architect': 'ACS',
-        'AI Consulting Services': 'AI Consulting',
-        'Disaster Recovery Premium': 'Disaster Recovery',
-        'LCS Standard': 'LCS',
-        'LCS Premium': 'LCS',
-        'Employee Users': 'Expense Reporting',
-      };
-      
       // Calculate updated opportunities with mapped names
       const updatedModules = (selectedCustomer.data.modules || [])
         .filter(mod => mod.name !== m.name)
-        .filter(mod => mod.status === 'Opportunity')
+        .filter(mod => mod.status === MODULE_STATUS.OPPORTUNITY)
         .map(mod => ({
-          name: moduleNameMap[mod.name] || mod.name,
+          name: mapModuleName(mod.name),
           processArea: mod.processArea
         }));
       
